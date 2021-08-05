@@ -1,13 +1,14 @@
 {
-  "name": "electron-quick-start",
+  "name": "electron-sitef",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
-  "main": "main.js",
+  "description": "Exemplo Electron Sitef",
+  "main": "./src/main.js",
   "scripts": {
     "start": "electron ."
   },
-  "repository": "https://github.com/electron/electron-quick-start",
+  "repository": "https://github.com/electron/electron-sitef",
   "keywords": [
+    "Sitef",
     "Electron",
     "quick",
     "start",
@@ -17,9 +18,11 @@
   "author": "GitHub",
   "license": "CC0-1.0",
   "devDependencies": {
-    "electron": "^13.0.1"
+    "electron": "^13.1.8",
+    "electron-reloader": "^1.2.1"
   },
   "dependencies": {
+    "moment": "^2.29.1",
     "node-sitef": "^1.4.0"
   }
 }
