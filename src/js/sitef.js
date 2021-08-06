@@ -18,7 +18,7 @@ var parametrosAdicionais = `[ParmsClient=1=0000000000000;2=0000000000000]`
 
 /* INICIAR FUNCAO */
 //Forma de pagamento
-var funcao = 0
+var funcao = 2
 //VALOR
 var valor = '100,00'
 //Número do Cupom Fiscal
@@ -85,11 +85,16 @@ function renderAlertSuccess(mensagem) {
   document.getElementById('alerta').innerHTML = mensagem
 }
 
+function renderAlertDanger(mensagem) {
+  document.getElementById('alerta').className = 'alert alert-danger'
+  document.getElementById('alerta').style.display = 'block'
+  document.getElementById('alerta').innerHTML = mensagem
+}
+
 async function handleConfiguraIntSiTefInterativo() {
   try {
     // Parâmetro obrigatórios
     const paramsConfig = { ip, loja, terminal, reservado, parametrosAdicionais }
-
     let resultado = await client.configurar(paramsConfig)
     //Tabela 2 - Códigos de retorno das funções de configuração
     switch (resultado) {
@@ -101,66 +106,66 @@ async function handleConfiguraIntSiTefInterativo() {
       //1 Endereço IP inválido ou não resolvido
       case 1:
         let mensagem2 = `${resultado} - Endereço IP inválido ou não resolvido`
-        renderAlertSuccess(mensagem2)
+        renderAlertDanger(mensagem2)
         break
       //2 Código da loja inválido
       case 2:
         let mensagem3 = `${resultado} - Código da loja inválido`
-        renderAlertSuccess(mensagem3)
+        renderAlertDanger(mensagem3)
         break
       //3 Código de terminal inválido
       case 3:
         let mensagem4 = `${resultado} - Código de terminal inválido`
-        renderAlertSuccess(mensagem4)
+        renderAlertDanger(mensagem4)
         break
       //6 Erro na inicialização do Tcp/Ip
       case 6:
         let mensagem6 = `${resultado} - Erro na inicialização do Tcp/Ip`
-        renderAlertSuccess(mensagem6)
+        renderAlertDanger(mensagem6)
         break
       //7 Falta de memória
       case 7:
         let mensagem7 = `${resultado} - Falta de memória`
-        renderAlertSuccess(mensagem7)
+        renderAlertDanger(mensagem7)
         break
       //8 Não encontrou a CliSiTef ou ela está com problemas
       case 8:
         let mensagem8 = `${resultado} - Não encontrou a CliSiTef ou ela está com problemas`
-        renderAlertSuccess(mensagem8)
+        renderAlertDanger(mensagem8)
         break
       //9 Configuração de servidores SiTef foi excedida.
       case 9:
         let mensagem9 = `${resultado} - Configuração de servidores SiTef foi excedida.`
-        renderAlertSuccess(mensagem9)
+        renderAlertDanger(mensagem9)
         break
       //10 Erro de acesso na pasta CliSiTef (possível falta de permissão para escrita)
       case 10:
         let mensagem10 = `${resultado} - Erro de acesso na pasta CliSiTef (possível falta de permissão para escrita)`
-        renderAlertSuccess(mensagem10)
+        renderAlertDanger(mensagem10)
         break
       //11 Dados inválidos passados pela automação.
       case 11:
         let mensagem11 = `${resultado} - Dados inválidos passados pela automação.`
-        renderAlertSuccess(mensagem11)
+        renderAlertDanger(mensagem11)
         break
       //12 Modo seguro não ativo (possível falta de configuração no servidor SiTef do arquivo .cha).
       case 12:
         let mensagem12 = `${resultado} - Modo seguro não ativo (possível falta de configuração no servidor SiTef do arquivo .cha).`
-        renderAlertSuccess(mensagem12)
+        renderAlertDanger(mensagem12)
         break
       //13 Caminho DLL inválido (o caminho completo das bibliotecas está muito grande).
       case 13:
         let mensagem13 = `${resultado} - Caminho DLL inválido (o caminho completo das bibliotecas está muito grande).`
-        renderAlertSuccess(mensagem13)
+        renderAlertDanger(mensagem13)
         break
       default:
         let mensagemDefault = `${resultado} - Erro desconhecido`
-        renderAlertSuccess(mensagemDefault)
+        renderAlertDanger(mensagemDefault)
         break
     }
     return true
   } catch (error) {
-    //renderAlert(error.message)
+    renderAlertDanger(error.message)
     return false
   }
 }
@@ -194,18 +199,35 @@ async function handleIniciaFuncaoSiTefInterativo() {
   switch (resultado) {
     case 10000:
       while (resultado === 10000) {
+        console.log('202', paramsContinuar)
         const continua = await client.continuarFuncao(paramsContinuar)
         if (!continua) break
-        console.log('paramsContinuar', continua)
+        const { buffer: retornoBuffer, comando, retorno } = continua
+        console.log('continua', continua)
+        console.log('buffer', retornoBuffer)
+        console.log('comando', comando)
+        console.log('retorno', retorno)
+        if (comando === 2 || comando === 1 || comando === 3 || comando === 20 || comando === 4) {
+          let mensagem = `${retorno} ${retornoBuffer}`
+          renderAlertSuccess(mensagem)
+          if (comando === 21 || comando === 4) {
+            console.log('217', paramsContinuar)
+            alert('if')
+          }
+        }
       }
       break
     case -12:
       let mensagem12 = `${resultado} - Erro na execução da rotina iterativa. Provavelmente o processo iterativo anterior não foi executado até o final (enquanto o retorno for igual a 10000).`
-      renderAlert(mensagem12)
+      renderAlertDanger(mensagem12)
+      break
+    case -1:
+      let mensagem1 = `${resultado} - Módulo não inicializado.`
+      renderAlertDanger(mensagem1)
       break
     default:
       let mensagemDefault = `${resultado} - Erro desconhecido`
-      renderAlert(mensagemDefault)
+      renderAlertDanger(mensagemDefault)
       break
   }
 }
@@ -215,21 +237,33 @@ async function handleExemploBasico() {
     let retorno = await handleConfiguraIntSiTefInterativo()
     if (retorno === true) {
       const resultado = await client.verificarPresenca()
-      if (resultado !== 1) {
-        retorno = await client.escreverMensagem('000')
-        let mensagemRetorno = `${retorno} - Mensagem escrita com sucesso.`
-        renderAlertSuccess(mensagemRetorno)
-      } else {
-        console.log('erro')
+      switch (resultado) {
+        case 1:
+          retorno = await client.escreverMensagem('Exemplo Simples')
+          let mensagemRetorno1 = `${retorno} - Mensagem escrita com sucesso.`
+          renderAlertSuccess(mensagemRetorno1)
+          break
+        case 0:
+          let mensagemRetorno0 = `${resultado} - Não existe um PinPad conectado ao micro;`
+          renderAlertDanger(mensagemRetorno0)
+          break
+        case -1:
+          let mensagemRetorno01 = `${resultado} - Biblioteca de acesso ao PinPad não encontrada;`
+          renderAlertDanger(mensagemRetorno01)
+          break
+        default:
+          let mensagemDefault = `${resultado} - Erro desconhecido`
+          renderAlertDanger(mensagemDefault)
+          break
       }
     } else {
-      console.log('erro')
+      console.log('226, erro')
     }
   } catch (error) {
-    //renderAlert(error.message)
+    renderAlertDanger(error.message)
   }
 }
 
 construtor()
 loadDlls()
-handleConfiguraIntSiTefInterativo()
+//handleConfiguraIntSiTefInterativo()
